@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AB0A132318B32F05000CA3B6 /* TraceTilesView.m in Sources */ = {isa = PBXBuildFile; fileRef = AB0A132218B32F05000CA3B6 /* TraceTilesView.m */; };
+		AB0A132618B3A8A8000CA3B6 /* TraceTilesLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = AB0A132518B3A8A8000CA3B6 /* TraceTilesLayer.m */; };
 		ABBCE50A18AD341900BEA3AD /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABBCE50918AD341900BEA3AD /* Cocoa.framework */; };
 		ABBCE51418AD341900BEA3AD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = ABBCE51218AD341900BEA3AD /* InfoPlist.strings */; };
 		ABBCE51618AD341900BEA3AD /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = ABBCE51518AD341900BEA3AD /* main.m */; };
@@ -18,6 +20,7 @@
 		ABBCE52A18AD341900BEA3AD /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABBCE50918AD341900BEA3AD /* Cocoa.framework */; };
 		ABBCE53218AD341A00BEA3AD /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = ABBCE53018AD341A00BEA3AD /* InfoPlist.strings */; };
 		ABBCE53418AD341A00BEA3AD /* PSMLXploreTests.m in Sources */ = {isa = PBXBuildFile; fileRef = ABBCE53318AD341A00BEA3AD /* PSMLXploreTests.m */; };
+		ABBCE54318AD3EDB00BEA3AD /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = ABBCE54218AD3EDB00BEA3AD /* QuartzCore.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -31,6 +34,10 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		AB0A132118B32F05000CA3B6 /* TraceTilesView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TraceTilesView.h; path = ../TraceTilesView.h; sourceTree = "<group>"; };
+		AB0A132218B32F05000CA3B6 /* TraceTilesView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TraceTilesView.m; path = ../TraceTilesView.m; sourceTree = "<group>"; };
+		AB0A132418B3A8A8000CA3B6 /* TraceTilesLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TraceTilesLayer.h; sourceTree = "<group>"; };
+		AB0A132518B3A8A8000CA3B6 /* TraceTilesLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TraceTilesLayer.m; sourceTree = "<group>"; };
 		ABBCE50618AD341900BEA3AD /* PSMLXplore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PSMLXplore.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		ABBCE50918AD341900BEA3AD /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };
 		ABBCE50C18AD341900BEA3AD /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
@@ -50,6 +57,7 @@
 		ABBCE52F18AD341A00BEA3AD /* PSMLXploreTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "PSMLXploreTests-Info.plist"; sourceTree = "<group>"; };
 		ABBCE53118AD341A00BEA3AD /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		ABBCE53318AD341A00BEA3AD /* PSMLXploreTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = PSMLXploreTests.m; sourceTree = "<group>"; };
+		ABBCE54218AD3EDB00BEA3AD /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -57,6 +65,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				ABBCE54318AD3EDB00BEA3AD /* QuartzCore.framework in Frameworks */,
 				ABBCE50A18AD341900BEA3AD /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -95,6 +104,7 @@
 		ABBCE50818AD341900BEA3AD /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				ABBCE54218AD3EDB00BEA3AD /* QuartzCore.framework */,
 				ABBCE50918AD341900BEA3AD /* Cocoa.framework */,
 				ABBCE52818AD341900BEA3AD /* XCTest.framework */,
 				ABBCE50B18AD341900BEA3AD /* Other Frameworks */,
@@ -117,6 +127,10 @@
 			children = (
 				ABBCE51B18AD341900BEA3AD /* AppDelegate.h */,
 				ABBCE51C18AD341900BEA3AD /* AppDelegate.m */,
+				AB0A132118B32F05000CA3B6 /* TraceTilesView.h */,
+				AB0A132218B32F05000CA3B6 /* TraceTilesView.m */,
+				AB0A132418B3A8A8000CA3B6 /* TraceTilesLayer.h */,
+				AB0A132518B3A8A8000CA3B6 /* TraceTilesLayer.m */,
 				ABBCE51E18AD341900BEA3AD /* MainMenu.xib */,
 				ABBCE52118AD341900BEA3AD /* Images.xcassets */,
 				ABBCE51018AD341900BEA3AD /* Supporting Files */,
@@ -252,6 +266,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AB0A132318B32F05000CA3B6 /* TraceTilesView.m in Sources */,
+				AB0A132618B3A8A8000CA3B6 /* TraceTilesLayer.m in Sources */,
 				ABBCE51D18AD341900BEA3AD /* AppDelegate.m in Sources */,
 				ABBCE51618AD341900BEA3AD /* main.m in Sources */,
 			);
@@ -464,6 +480,7 @@
 				ABBCE53918AD341A00BEA3AD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		ABBCE53A18AD341A00BEA3AD /* Build configuration list for PBXNativeTarget "PSMLXploreTests" */ = {
 			isa = XCConfigurationList;
@@ -472,6 +489,7 @@
 				ABBCE53C18AD341A00BEA3AD /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
