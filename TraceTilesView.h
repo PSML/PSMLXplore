@@ -10,4 +10,7 @@
 
 @interface TraceTilesView : NSView
 
+@property (weak) NSScrollView *myScrollView;
+
+
 @end

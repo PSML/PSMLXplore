@@ -11,8 +11,10 @@
 
 @interface AppDelegate : NSObject <NSApplicationDelegate>
 
+@property (weak) IBOutlet NSTextField *inspectorOriginX;
+@property (weak) IBOutlet NSTextField *inspectorOriginY;
 @property (strong) IBOutlet NSWindow *window;
 
-
+- (void)scrollViewContentBoundsDidChange:(NSNotification *)notification;
 
 @end

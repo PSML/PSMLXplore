@@ -22,6 +22,7 @@
 struct Data {
     void *mem;
     off_t filesize;
+    uint64 numValues;
 };
 static struct Data data;
 
@@ -31,6 +32,7 @@ static void mapData() {
     struct stat stats;
     fstat(fd, &stats);
     data.filesize = stats.st_size;
+    data.numValues = data.filesize/2;
     data.mem = mmap(0, data.filesize, PROT_READ, MAP_PRIVATE, fd, 0);
 //    for (int i=0; i<100; i++) {
 //        NSLog(@"%d=%hu",i, ((unsigned short *)data.mem)[i]);
@@ -47,6 +49,24 @@ static void mapData() {
     // It is important to be aware of this and to make sure you accidentally don't repeat your setup twice.
     static NSInteger awakeFromNibCount = 0;
     NSLog(@"awakeFromNib called %ld", (long)++awakeFromNibCount);
+}
+
+- (void)scrollViewContentBoundsDidChange:(NSNotification *)notification
+{
+ //   NSLog(@"scrollViewContentsBoundsDidChange");
+    // get the changed content view from the notification
+    NSClipView *changedContentView=[notification object];
+    
+    // get the origin of the NSClipView of the scroll view that
+    // we're watching
+    NSPoint changedBoundsOrigin = [changedContentView documentVisibleRect].origin;
+    int64_t x = changedBoundsOrigin.x;
+//    NSLog(@"origin.x=%f origin.y=%f", changedBoundsOrigin.x, changedBoundsOrigin.y);
+    if (x<0) x=0;
+    if (x<data.numValues) {
+      [_inspectorOriginX setIntegerValue:(NSInteger)x];
+      [_inspectorOriginY setIntValue:(int)((unsigned short *)data.mem)[x]];
+    }
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -77,17 +97,25 @@ static void mapData() {
     
     CGRect bigImageRect = CGRectMake(0, 20, imageWidth, imageHeight);
     
-    NSView *tilesView = [[TraceTilesView alloc] initWithFrame:bigImageRect];
+    TraceTilesView *tilesView = [[TraceTilesView alloc] initWithFrame:bigImageRect];
     [tilesView setWantsLayer:YES];
     TraceTilesLayer *hostedLayer = [TraceTilesLayer layer];
     [tilesView setLayer:hostedLayer];
   //  [tilesView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
-    
+    tilesView.myScrollView = scrollView;
+ 
     [scrollView setDocumentView:tilesView];
     [self.window setContentView:scrollView];
     [self.window setContentSize:wcsize];
     [self.window acceptsMouseMovedEvents];
+    [self.window setAcceptsMouseMovedEvents:YES];
     
+    [[scrollView contentView] setPostsBoundsChangedNotifications:YES];
+    [[NSNotificationCenter defaultCenter] addObserver:self
+                                             selector:@selector(scrollViewContentBoundsDidChange:)
+                                                 name:NSViewBoundsDidChangeNotification
+                                               object:[scrollView contentView]];
+
     hostedLayer.delegate = self;
     // To provide multiple levels of content, you need to set the levelsOfDetail property.
 	// For this sample, we have 5 levels of detail (1/4x - 4x).
@@ -109,7 +137,8 @@ static void mapData() {
 	// Layers start life validated (unlike views).
 	// We request that the layer have its contents drawn so that it can display something.
 	[hostedLayer setNeedsDisplay];
-}
+    
+ }
 
 - (void)dealloc
 {
