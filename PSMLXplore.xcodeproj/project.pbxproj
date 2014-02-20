@@ -125,10 +125,10 @@
 		ABBCE50F18AD341900BEA3AD /* PSMLXplore */ = {
 			isa = PBXGroup;
 			children = (
-				ABBCE51B18AD341900BEA3AD /* AppDelegate.h */,
-				ABBCE51C18AD341900BEA3AD /* AppDelegate.m */,
 				AB0A132118B32F05000CA3B6 /* TraceTilesView.h */,
 				AB0A132218B32F05000CA3B6 /* TraceTilesView.m */,
+				ABBCE51B18AD341900BEA3AD /* AppDelegate.h */,
+				ABBCE51C18AD341900BEA3AD /* AppDelegate.m */,
 				AB0A132418B3A8A8000CA3B6 /* TraceTilesLayer.h */,
 				AB0A132518B3A8A8000CA3B6 /* TraceTilesLayer.m */,
 				ABBCE51E18AD341900BEA3AD /* MainMenu.xib */,

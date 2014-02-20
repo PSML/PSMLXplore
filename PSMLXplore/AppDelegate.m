@@ -92,10 +92,10 @@ static void mapData() {
     [scrollView setHasVerticalScroller:YES];
     [scrollView setHasHorizontalScroller:YES];
     [scrollView setBorderType:NSNoBorder];
-    scrollView.backgroundColor = [NSColor clearColor];
+    scrollView.backgroundColor = [NSColor whiteColor];
     [scrollView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
     
-    CGRect bigImageRect = CGRectMake(0, 20, imageWidth, imageHeight);
+    CGRect bigImageRect = CGRectMake(0, 0, imageWidth, imageHeight);
     
     TraceTilesView *tilesView = [[TraceTilesView alloc] initWithFrame:bigImageRect];
     [tilesView setWantsLayer:YES];
@@ -128,10 +128,10 @@ static void mapData() {
     NSLog(@"TraceTilesLayer %f", [TraceTilesLayer fadeDuration]);
     NSLog(@"hostedLayer tileSize %f %f", hostedLayer.tileSize.width, hostedLayer.tileSize.height);
     
-    hostedLayer.backgroundColor = [NSColor whiteColor].CGColor;
+    hostedLayer.backgroundColor = [NSColor clearColor].CGColor;
     hostedLayer.borderColor = [NSColor blackColor].CGColor;
-    hostedLayer.borderWidth = 3.0;
-    hostedLayer.frame = CGRectMake(0.0, 20, imageWidth, imageHeight);
+    hostedLayer.borderWidth = 0.0;
+    hostedLayer.frame = CGRectMake(0.0, 0, imageWidth, imageHeight);
     hostedLayer.contentsScale=1.0;
     
 	// Layers start life validated (unlike views).
@@ -153,13 +153,19 @@ static void mapData() {
 //    NSLog(@"drawLayer inContext: Called x:%f y:%f w:%f h%f", bounds.origin.x, bounds.origin.y, bounds.size.width, bounds.size.height);
 	CGRect myRect;
     //    myRect.origin.y=bounds.size.height/2;
-    myRect.size.height=1; myRect.size.width=1;
-    int x, xend = bounds.origin.x + bounds.size.width;
+    myRect.size.height=9; myRect.size.width=9;
+    //myRect.size.height=1; myRect.size.width=1;
+    int x, xstart=(int)bounds.origin.x,
+        xend = bounds.origin.x + bounds.size.width + 4;
+    if (xstart!=0) xstart-=4; // redraw overlapping points
+    
     CGContextSetRGBFillColor(context, 1.0, 0.0, 0.0, 1.0);
-    for (x=(int)bounds.origin.x; x<xend; x++) {
-        myRect.origin.x = x;
-        myRect.origin.y= ((unsigned short *)data.mem)[x];
-   	    CGContextFillRect(context, myRect);
+    for (x=xstart; x<xend; x++) {
+        myRect.origin.x = x-4;
+        if (x<data.numValues) {
+            myRect.origin.y= (((unsigned short *)data.mem)[x])-4;
+            CGContextFillEllipseInRect(context, myRect);
+        }
     }
 //    CGContextRestoreGState(context);
 }
