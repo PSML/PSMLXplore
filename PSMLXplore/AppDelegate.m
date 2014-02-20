@@ -210,13 +210,13 @@ Annotations *theAnnotations = nil;
     dataLayer.backgroundColor = [NSColor clearColor].CGColor;
     dataLayer.borderColor = [NSColor blackColor].CGColor;
     dataLayer.borderWidth = 0.0;
-    dataLayer.frame = CGRectMake(0.0, 0, data.numValues, data.maxValue);
+    dataLayer.frame = bigImageRect;
     dataLayer.contentsScale=1.0;
     
     annLayer.backgroundColor = [NSColor clearColor].CGColor;
     annLayer.borderColor = [NSColor blackColor].CGColor;
     annLayer.borderWidth = 0.0;
-    annLayer.frame = CGRectMake(0.0, 0, data.numValues, data.maxValue);
+    annLayer.frame = bigImageRect;
     annLayer.contentsScale=1.0;
 
     setPoint(tilesView, 9);
@@ -225,6 +225,14 @@ Annotations *theAnnotations = nil;
 	// We request that the layer have its contents drawn so that it can display something.
 	[dataLayer setNeedsDisplay];
     [annLayer setNeedsDisplay];
+    
+    
+    NSLog(@"window: size: %f %f scrollView: %f %f tilesView: %f %f dataLayer: %f %f annLayer: %f %f",
+          self.window.frame.size.width, self.window.frame.size.height,
+          scrollView.frame.size.width, scrollView.frame.size.height,
+          tilesView.frame.size.width, tilesView.frame.size.height,
+          dataLayer.frame.size.width, dataLayer.frame.size.height,
+          annLayer.frame.size.width, annLayer.frame.size.height);
     
  }
 
