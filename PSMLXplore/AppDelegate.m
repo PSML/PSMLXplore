@@ -18,36 +18,23 @@
 #include <sys/mman.h>
 #include <stdio.h>
 #include <math.h>
+#include "data.h"
+#include "thepoint.h"
 
-struct Data {
-    void *mem;
-    off_t filesize;
-    uint64 numValues;
-};
-static struct Data data;
+struct Data data = { NULL, 0, 0 };
 
-static void mapData() {
-    int fd = open("/tmp/data", O_RDONLY);
+void mapData(char *path, uint64 max) {
+    int fd = open(path, O_RDONLY);
     fcntl(fd, F_NOCACHE, 1);
     struct stat stats;
     fstat(fd, &stats);
     data.filesize = stats.st_size;
     data.numValues = data.filesize/2;
+    data.maxValue = max;
     data.mem = mmap(0, data.filesize, PROT_READ, MAP_PRIVATE, fd, 0);
 }
 
-struct ThePoint {
-    CGLayerRef layer;
-    unsigned int diameter;
-    unsigned int radius;
-};
-
-static struct ThePoint thePoint = { nil, 0, 0 };
-
-int getPointDiameter(void)
-{
-    return thePoint.diameter;
-}
+struct ThePoint thePoint = { nil, 0, 0 };
 
 void
 setPoint(NSView *view, unsigned int diameter)
@@ -82,6 +69,52 @@ setPoint(NSView *view, unsigned int diameter)
     NSLog(@"setPoint diameter:%u radius:%u", thePoint.diameter, thePoint.radius);
 }
 
+@interface NULLDraw : NSObject
+-(void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context;
+@end
+
+@implementation NULLDraw
+-(void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context {
+}
+@end
+
+NULLDraw *nullDraw = nil;
+
+
+int drawAnn = 0;
+
+void drawAnnOnTransparencyLayer (CGContextRef myContext,
+                                 CGFloat wd)
+{
+    
+//    CGContextBeginTransparencyLayer (myContext, NULL);// 4
+    // Your drawing code here// 5
+    CGContextSetRGBFillColor (myContext, 0, 1, 0, 0.25);
+    CGContextFillRect (myContext, CGRectMake ((data.numValues/2)-(wd/2),0, wd, data.maxValue));
+//    CGContextEndTransparencyLayer (myContext);// 6
+}
+
+
+@interface Annotations : NSObject
+-(void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context;
+@end
+
+@implementation Annotations
+-(void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context {
+//    NSLog(@"Ann: drawLayer");
+    if (drawAnn) {
+        NSLog(@"drawing Annoation");
+        drawAnnOnTransparencyLayer(context, thePoint.diameter);
+    }
+}
+@end
+
+NSScrollView *scrollView = nil;
+TraceTilesLayer *dataLayer = nil;
+TraceTilesLayer *annLayer = nil;
+Annotations *theAnnotations = nil;
+
+
 @implementation AppDelegate
 
 - (void)awakeFromNib {
@@ -112,36 +145,38 @@ setPoint(NSView *view, unsigned int diameter)
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     // Insert code here to initialize your application
-    
-    mapData();
+   // do global initializations
+    mapData("/tmp/data", 5000);
     
     NSLog(@"Data Mapped %lld", data.filesize);
-    
+   
+    nullDraw = [NULLDraw alloc];
 
+    
     NSSize wcsize;
     wcsize.height = 200;
     wcsize.width = 1000;
     
-    off_t imageWidth = data.filesize/2;
-    int imageHeight = 5000;
-    
     CGRect scrollRect =  CGRectMake(0, 0, wcsize.width, wcsize.height);
     
-    NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:scrollRect];
+    scrollView = [[NSScrollView alloc] initWithFrame:scrollRect];
     [scrollView setHasVerticalScroller:YES];
     [scrollView setHasHorizontalScroller:YES];
     [scrollView setBorderType:NSNoBorder];
     scrollView.backgroundColor = [NSColor whiteColor];
     [scrollView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
     
-    CGRect bigImageRect = CGRectMake(0, 0, imageWidth, imageHeight);
+    CGRect bigImageRect = CGRectMake(0, 0, data.numValues, data.maxValue);
     
     TraceTilesView *tilesView = [[TraceTilesView alloc] initWithFrame:bigImageRect];
     [tilesView setWantsLayer:YES];
-    TraceTilesLayer *hostedLayer = [TraceTilesLayer layer];
-    [tilesView setLayer:hostedLayer];
-    tilesView.myScrollView = scrollView;
- 
+    dataLayer = [[TraceTilesLayer layer] init];
+    theAnnotations = [[Annotations alloc] init];
+    annLayer = [[TraceTilesLayer alloc] init];
+    
+    [dataLayer addSublayer:annLayer];
+    [tilesView setLayer:dataLayer];
+
     [scrollView setDocumentView:tilesView];
     [self.window setContentView:scrollView];
     [self.window setContentSize:wcsize];
@@ -154,29 +189,42 @@ setPoint(NSView *view, unsigned int diameter)
                                                  name:NSViewBoundsDidChangeNotification
                                                object:[scrollView contentView]];
 
-    hostedLayer.delegate = self;
+    // If no trace specified then these should be set to NULLDraw delegate
+    dataLayer.delegate = self;
+    annLayer.delegate = theAnnotations;
+
     // To provide multiple levels of content, you need to set the levelsOfDetail property.
 	// For this sample, we have 5 levels of detail (1/4x - 4x).
 	// By setting the value to 5, we establish that we have levels of 1/16x - 1x (2^-4 - 2^0)
 	// we use the levelsOfDetailBias property we shift this up by 2 raised to the power
 	// of the bias, changing the range to 1/4-4x (2^-2 - 2^2).
-	hostedLayer.levelsOfDetail = 1;
-	hostedLayer.levelsOfDetailBias = 1;
-
-    NSLog(@"TraceTilesLayer %f", [TraceTilesLayer fadeDuration]);
-    NSLog(@"hostedLayer tileSize %f %f", hostedLayer.tileSize.width, hostedLayer.tileSize.height);
+	dataLayer.levelsOfDetail = 1;
+	dataLayer.levelsOfDetailBias = 1;
+    annLayer.levelsOfDetail = 1;
+    annLayer.levelsOfDetailBias = 1;
     
-    hostedLayer.backgroundColor = [NSColor clearColor].CGColor;
-    hostedLayer.borderColor = [NSColor blackColor].CGColor;
-    hostedLayer.borderWidth = 0.0;
-    hostedLayer.frame = CGRectMake(0.0, 0, imageWidth, imageHeight);
-    hostedLayer.contentsScale=1.0;
+    NSLog(@"TraceTilesLayer %f", [TraceTilesLayer fadeDuration]);
+    NSLog(@"dataLayer tileSize %f %f", dataLayer.tileSize.width, dataLayer.tileSize.height);
+    NSLog(@"annLayer tileSize %f %f", annLayer.tileSize.width, annLayer.tileSize.height);
+
+    dataLayer.backgroundColor = [NSColor clearColor].CGColor;
+    dataLayer.borderColor = [NSColor blackColor].CGColor;
+    dataLayer.borderWidth = 0.0;
+    dataLayer.frame = CGRectMake(0.0, 0, data.numValues, data.maxValue);
+    dataLayer.contentsScale=1.0;
+    
+    annLayer.backgroundColor = [NSColor clearColor].CGColor;
+    annLayer.borderColor = [NSColor blackColor].CGColor;
+    annLayer.borderWidth = 0.0;
+    annLayer.frame = CGRectMake(0.0, 0, data.numValues, data.maxValue);
+    annLayer.contentsScale=1.0;
 
     setPoint(tilesView, 9);
     
 	// Layers start life validated (unlike views).
 	// We request that the layer have its contents drawn so that it can display something.
-	[hostedLayer setNeedsDisplay];
+	[dataLayer setNeedsDisplay];
+    [annLayer setNeedsDisplay];
     
  }
 
@@ -185,11 +233,14 @@ setPoint(NSView *view, unsigned int diameter)
     NSLog(@"AppDelegate dalloc");
 }
 
+
 -(void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context
 {
     CGRect bounds = CGContextGetClipBoundingBox(context);
     CGPoint loc;
 
+//    NSLog(@"Data: drawLayer");
+    
     // Adjust start and end to redraw overlapping points
     int x,
         xstart=(int)bounds.origin.x,
@@ -205,7 +256,7 @@ setPoint(NSView *view, unsigned int diameter)
         }
     }
 
-}
+  }
 
 
 @end

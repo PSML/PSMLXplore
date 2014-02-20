@@ -8,6 +8,8 @@
 
 #import "TraceTilesView.h"
 #import "TraceTilesLayer.h"
+#include "data.h"
+#include "thepoint.h"
 
 @implementation TraceTilesView
 
@@ -61,8 +63,10 @@
     [self setFrameSize:newSize];
 }
 
-extern void setPoint(NSView *view, int diameter);
-extern int getPointDiameter(void);
+extern int drawAnn;
+extern TraceTilesLayer *annLayer;
+extern TraceTilesLayer *dataLayer;
+extern NSScrollView *scrollView;
 
 - (void)keyDown:(NSEvent *)theEvent {
     NSLog(@"keyDown");
@@ -73,48 +77,49 @@ extern int getPointDiameter(void);
     characters = [theEvent charactersIgnoringModifiers];
     
     // is the "r" key pressed?
-    if ([characters isEqual:@"m"]) {
+    // is the "r" key pressed?
+    if ([characters isEqual:@"a"]) {
+        // Yes, it is
+        handled = YES;
+        drawAnn = 1;
+        [annLayer setNeedsDisplay];
+      } else if ([characters isEqual:@"m"]) {
         // Yes, it is
         handled = YES;
         // test of programmatic scrolling
-        NSView *dv = [_myScrollView documentView];
-        NSPoint mid;
-        mid.x = [dv frame].size.width/2;
-        mid.y = 0;
+        NSView *dv = [scrollView documentView];
+        NSPoint mid = {data.numValues/2, 0 };
+  //      mid.x = [dv frame].size.width/2;
+//        mid.y = 0;
         [dv scrollPoint:mid];
     } else  if ([characters isEqual:@"b"]) {
         // Yes, it is
         handled = YES;
         // test of programmatic scrolling
-        NSView *dv = [_myScrollView documentView];
-        NSPoint pt;
-        pt.x = 0;
-        pt.y = 0;
+        NSView *dv = [scrollView documentView];
+        NSPoint pt = {0,0};
         [dv scrollPoint:pt];
     } else  if ([characters isEqual:@"e"]) {
         // Yes, it is
         handled = YES;
         // test of programmatic scrolling
-        NSView *dv = [_myScrollView documentView];
-        NSPoint pt;
-        pt.x = [dv frame].size.width;
-        pt.y = 0;
+        NSView *dv = [scrollView documentView];
+        NSPoint pt = {data.numValues - 1, 0};
+//        pt.x = [dv frame].size.width;
+//        pt.y = 0;
         [dv scrollPoint:pt];
     } else if ([characters isEqual:@"+"]) {
-        NSView *dv = [_myScrollView documentView];
-        CALayer *layer = dv.layer;
         setPoint(self, getPointDiameter()+2);
-        [layer setNeedsDisplay];
+        [dataLayer setNeedsDisplay];
+        [annLayer setNeedsDisplay];
     } else if ([characters isEqual:@"="]) {
-        NSView *dv = [_myScrollView documentView];
-        CALayer *layer = dv.layer;
         setPoint(self, 9);
-        [layer setNeedsDisplay];
+        [dataLayer setNeedsDisplay];
+        [annLayer setNeedsDisplay];
     } else if ([characters isEqual:@"-"]) {
-        NSView *dv = [_myScrollView documentView];
-        CALayer *layer = dv.layer;
         setPoint(self, getPointDiameter()-2);
-        [layer setNeedsDisplay];
+        [dataLayer setNeedsDisplay];
+        [annLayer setNeedsDisplay];
     }
     if (!handled)
         [super keyDown:theEvent];
