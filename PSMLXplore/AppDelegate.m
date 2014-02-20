@@ -34,12 +34,53 @@ static void mapData() {
     data.filesize = stats.st_size;
     data.numValues = data.filesize/2;
     data.mem = mmap(0, data.filesize, PROT_READ, MAP_PRIVATE, fd, 0);
-//    for (int i=0; i<100; i++) {
-//        NSLog(@"%d=%hu",i, ((unsigned short *)data.mem)[i]);
-//   }
 }
 
+struct ThePoint {
+    CGLayerRef layer;
+    unsigned int diameter;
+    unsigned int radius;
+};
 
+static struct ThePoint thePoint = { nil, 0, 0 };
+
+int getPointDiameter(void)
+{
+    return thePoint.diameter;
+}
+
+void
+setPoint(NSView *view, unsigned int diameter)
+{
+    CGRect ptRect;
+    
+    if (thePoint.layer != nil) {
+        CGLayerRelease(thePoint.layer);
+    }
+    
+    if (diameter<3) diameter=3;
+    if ((diameter & 0x1) == 0) diameter++;
+    
+    thePoint.diameter = diameter;
+    thePoint.radius = diameter / 2;
+    
+    ptRect.origin.x = 0; ptRect.origin.y = 0;
+    ptRect.size.height = ptRect.size.width = diameter;
+    
+    [view lockFocus];
+    CGContextRef context = (CGContextRef)[[NSGraphicsContext currentContext]
+                                          graphicsPort];
+    thePoint.layer = CGLayerCreateWithContext(context,ptRect.size,NULL);
+    CGContextRef ptCtx = CGLayerGetContext (thePoint.layer);
+    
+    CGContextSetRGBFillColor (ptCtx, 0, 0, 0, 0);
+    CGContextFillRect (ptCtx, ptRect);
+    CGContextSetRGBFillColor(ptCtx, 1.0, 0.0, 0.0, 1.0);
+    CGContextFillEllipseInRect(ptCtx, ptRect);
+    
+    [view unlockFocus];
+    NSLog(@"setPoint diameter:%u radius:%u", thePoint.diameter, thePoint.radius);
+}
 
 @implementation AppDelegate
 
@@ -53,15 +94,14 @@ static void mapData() {
 
 - (void)scrollViewContentBoundsDidChange:(NSNotification *)notification
 {
- //   NSLog(@"scrollViewContentsBoundsDidChange");
-    // get the changed content view from the notification
+     // get the changed content view from the notification
     NSClipView *changedContentView=[notification object];
     
     // get the origin of the NSClipView of the scroll view that
     // we're watching
     NSPoint changedBoundsOrigin = [changedContentView documentVisibleRect].origin;
     int64_t x = changedBoundsOrigin.x;
-//    NSLog(@"origin.x=%f origin.y=%f", changedBoundsOrigin.x, changedBoundsOrigin.y);
+
     if (x<0) x=0;
     if (x<data.numValues) {
       [_inspectorOriginX setIntegerValue:(NSInteger)x];
@@ -88,7 +128,6 @@ static void mapData() {
     CGRect scrollRect =  CGRectMake(0, 0, wcsize.width, wcsize.height);
     
     NSScrollView *scrollView = [[NSScrollView alloc] initWithFrame:scrollRect];
- //   [scrollView setFrameSize:CGSizeMake(imageWidth, imageHeight)];
     [scrollView setHasVerticalScroller:YES];
     [scrollView setHasHorizontalScroller:YES];
     [scrollView setBorderType:NSNoBorder];
@@ -101,7 +140,6 @@ static void mapData() {
     [tilesView setWantsLayer:YES];
     TraceTilesLayer *hostedLayer = [TraceTilesLayer layer];
     [tilesView setLayer:hostedLayer];
-  //  [tilesView setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
     tilesView.myScrollView = scrollView;
  
     [scrollView setDocumentView:tilesView];
@@ -133,6 +171,8 @@ static void mapData() {
     hostedLayer.borderWidth = 0.0;
     hostedLayer.frame = CGRectMake(0.0, 0, imageWidth, imageHeight);
     hostedLayer.contentsScale=1.0;
+
+    setPoint(tilesView, 9);
     
 	// Layers start life validated (unlike views).
 	// We request that the layer have its contents drawn so that it can display something.
@@ -147,38 +187,25 @@ static void mapData() {
 
 -(void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context
 {
-//    CGContextSaveGState(context);
-//    CGContextScaleCTM(context, 0.2, 0.2);
     CGRect bounds = CGContextGetClipBoundingBox(context);
-//    NSLog(@"drawLayer inContext: Called x:%f y:%f w:%f h%f", bounds.origin.x, bounds.origin.y, bounds.size.width, bounds.size.height);
-	CGRect myRect;
-    //    myRect.origin.y=bounds.size.height/2;
-    myRect.size.height=9; myRect.size.width=9;
-    //myRect.size.height=1; myRect.size.width=1;
-    int x, xstart=(int)bounds.origin.x,
-        xend = bounds.origin.x + bounds.size.width + 4;
-    if (xstart!=0) xstart-=4; // redraw overlapping points
+    CGPoint loc;
+
+    // Adjust start and end to redraw overlapping points
+    int x,
+        xstart=(int)bounds.origin.x,
+        xend = bounds.origin.x + bounds.size.width + thePoint.radius;
     
-    CGContextSetRGBFillColor(context, 1.0, 0.0, 0.0, 1.0);
+    if (xstart!=0) xstart-=thePoint.radius;
+    
     for (x=xstart; x<xend; x++) {
-        myRect.origin.x = x-4;
+        loc.x = x - thePoint.radius;
         if (x<data.numValues) {
-            myRect.origin.y= (((unsigned short *)data.mem)[x])-4;
-            CGContextFillEllipseInRect(context, myRect);
+            loc.y  = (((unsigned short *)data.mem)[x])-thePoint.radius;
+            CGContextDrawLayerAtPoint(context, loc, thePoint.layer);
         }
     }
-//    CGContextRestoreGState(context);
+
 }
 
 
-
-#if 0
-- (void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context
-{
-    
- 	CGRect bounds = CGContextGetClipBoundingBox(context);
-
-//    NSLog(@"o.x=%f o.y=%f o.w=%f o.h=%f",bounds.origin.x, bounds.origin.y, bounds.size.width, bounds.size.height);
-}
-#endif
 @end

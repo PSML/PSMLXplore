@@ -61,6 +61,9 @@
     [self setFrameSize:newSize];
 }
 
+extern void setPoint(NSView *view, int diameter);
+extern int getPointDiameter(void);
+
 - (void)keyDown:(NSEvent *)theEvent {
     NSLog(@"keyDown");
     BOOL handled = NO;
@@ -100,19 +103,17 @@
     } else if ([characters isEqual:@"+"]) {
         NSView *dv = [_myScrollView documentView];
         CALayer *layer = dv.layer;
-        layer.contentsScale += 0.5;
+        setPoint(self, getPointDiameter()+2);
         [layer setNeedsDisplay];
     } else if ([characters isEqual:@"="]) {
         NSView *dv = [_myScrollView documentView];
         CALayer *layer = dv.layer;
-        if (layer.contentsScale != 1.0) {
-          layer.contentsScale = 1.0;
-          [layer setNeedsDisplay];
-        }
+        setPoint(self, 9);
+        [layer setNeedsDisplay];
     } else if ([characters isEqual:@"-"]) {
         NSView *dv = [_myScrollView documentView];
         CALayer *layer = dv.layer;
-        layer.contentsScale -= 0.5;
+        setPoint(self, getPointDiameter()-2);
         [layer setNeedsDisplay];
     }
     if (!handled)
