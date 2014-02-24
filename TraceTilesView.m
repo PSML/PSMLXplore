@@ -28,8 +28,9 @@
     return YES;
 }
 
+
 -(void)mouseMoved:(NSEvent *)theEvent {
-    NSPoint event_location = [theEvent locationInWindow];
+   NSPoint event_location = [theEvent locationInWindow];
     NSLog(@"mouseMoved %f,%f",event_location.x, event_location.y);
 }
 
@@ -50,23 +51,19 @@
     NSLog(@"mouseDown: epoint: %f,%f lpoint:%f,%f bpoint:%f,%f", event_location.x, event_location.y,
             point.x, point.y,
             point2.x, point2.y);
-    
- 
-
 }
 
-- (void)magnifyWithEvent:(NSEvent *)event {
-    NSLog(@"Magnification value is %f", [event magnification]);
-    NSSize newSize;
-    newSize.height = self.frame.size.height * ([event magnification] + 1.0);
-    newSize.width = self.frame.size.width * ([event magnification] + 1.0);
-    [self setFrameSize:newSize];
-}
-
+extern void ann_region(NSView *view,
+                       uint64_t x, uint64_t y, uint64_t width, uint64_t height,
+                       CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
+                       char *label);
 extern int drawAnn;
 extern TraceTilesLayer *annLayer;
 extern TraceTilesLayer *dataLayer;
 extern NSScrollView *scrollView;
+extern TraceTilesView *tilesView;
+
+
 
 - (void)keyDown:(NSEvent *)theEvent {
     NSLog(@"keyDown");
@@ -81,33 +78,41 @@ extern NSScrollView *scrollView;
     if ([characters isEqual:@"a"]) {
         // Yes, it is
         handled = YES;
-        drawAnn = 1;
+        ann_region(self, data.numValues/2, 0, thePoint.diameter, data.maxValue, 1.0, 0.0, 0, 0.25, NULL);
         [annLayer setNeedsDisplay];
-      } else if ([characters isEqual:@"m"]) {
+    } else if ([characters isEqual:@"r"]) {
+        handled = YES;
+        ann_region(self, 800, 0, 3000, data.maxValue, 0.0, 1.0, 0, 0.25, NULL);
+        [annLayer setNeedsDisplay];
+    } else if ([characters isEqual:@"m"]) {
         // Yes, it is
         handled = YES;
-        // test of programmatic scrolling
-        NSView *dv = [scrollView documentView];
-        NSPoint mid = {data.numValues/2, 0 };
-  //      mid.x = [dv frame].size.width/2;
-//        mid.y = 0;
-        [dv scrollPoint:mid];
+        NSPoint pt = {data.numValues/2, 0 };
+        [self scrollPoint:pt];
+          NSLog(@"ms: %f %f", pt.x, pt.y);
+    } else if ([characters isEqual:@"f"]) {
+        handled = YES;
+        [scrollView setMagnification:1.0];
+    //    [self resetScaling];
+    } else if ([characters isEqual:@"v"]) {
+            //        NSSize newSize;
+        handled = YES;
+        CGFloat mag = self.window.frame.size.height / data.maxValue;
+        [scrollView setMagnification:mag];
+    } else if ([characters isEqual:@"q"]) {
+        handled = YES;
+        NSLog(@"1/4 scale");
+        [scrollView setMagnification:0.25];
     } else  if ([characters isEqual:@"b"]) {
         // Yes, it is
         handled = YES;
-        // test of programmatic scrolling
-        NSView *dv = [scrollView documentView];
         NSPoint pt = {0,0};
-        [dv scrollPoint:pt];
+        [self scrollPoint:pt];
     } else  if ([characters isEqual:@"e"]) {
         // Yes, it is
         handled = YES;
-        // test of programmatic scrolling
-        NSView *dv = [scrollView documentView];
-        NSPoint pt = {data.numValues - 1, 0};
-//        pt.x = [dv frame].size.width;
-//        pt.y = 0;
-        [dv scrollPoint:pt];
+        NSPoint pt = {data.numValues, 0};
+        [self scrollPoint:pt];
     } else if ([characters isEqual:@"+"]) {
         setPoint(self, getPointDiameter()+2);
         [dataLayer setNeedsDisplay];
