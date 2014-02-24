@@ -113,31 +113,34 @@ ann_point(int64_t x, int64_t y, RGBColor color, char *label)
 }
 
 void
-ann_vline(int64_t x, int64_t len, RGBColor color, char *label)
+ann_vline(NSView *view, int64_t x, int64_t len,
+          CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
+          char *label)
 {
     
     
 }
 
 void
-ann_hline(int64_t y, int64_t len, RGBColor color, char *label)
+ann_hline(NSView *view,
+          int64_t y, int64_t len,
+          CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
+          char *label)
 {
-
+//    ann_region(view,
 }
 
 void
-ann_region(NSView *view, uint64_t x, uint64_t y, uint64_t width, uint64_t height, CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha, char *label)
+ann_region(NSView *view,
+           uint64_t x, uint64_t y, uint64_t width, uint64_t height,
+           CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
+           char *label)
 {
     uint64_t startTile = x >> TILEWIDTH_LOG2BITS;
     uint64_t endTile = (x + width) >> TILEWIDTH_LOG2BITS;
     CGLayerRef tileLayer;
     CGContextRef layerCtx;
     
- //   CGRect annRect = CGRectMake (dataXToViewX(x,view.frame.size.width),
-//                                 dataYToViewY(y,view.frame.size.height),
-//                                 dataXToViewX(width,view.frame.size.width),
-//                                 dataYToViewY(height,view.frame.size.height));
-
     CGRect annRect = CGRectMake(x,y,width,height);
     CGRect tileRect = CGRectMake(0,0,tileSize.width,tileSize.height);
     CGRect annTileIntersect;
