@@ -90,6 +90,11 @@ TraceTilesView *tilesView = nil;
 TraceTilesLayer *dataLayer = nil;
 TraceTilesLayer *annLayer = nil;
 
+#ifdef DATA_PRE_RENDER
+CGLayerRef *dataLayers = NULL;
+char *dataLayerRendered = NULL;
+#endif
+
 AnnotationsDelegate *theAnnotationsDelegate = nil;
 CFMutableDictionaryRef annLayers = nil;
 
@@ -100,24 +105,6 @@ int drawAnn = 0;
 #define TILEWIDTH (1<<10)
 CGSize tileSize;
 
-#if 0
-void drawAnnOnTransparencyLayer (CGContextRef myContext,
-                                 CGFloat wd)
-{
-    
- CGContextBeginTransparencyLayer (myContext, NULL);// 4
-    // Your drawing code here// 5
-    CGRect theRect = CGRectMake (dataXToViewX((data.numValues/2)-(wd/2),tilesView.frame.size.width),0,
-                                dataXToViewX(wd,tilesView.frame.size.width),
-                                tilesView.frame.size.height);
-    CGContextSetRGBFillColor (myContext, 0, 1, 0, 0.25);
-    CGContextFillRect (myContext, theRect);
-//    NSLog(@"Ann rect :%f %f, %f %f",
-//          theRect.origin.x, theRect.origin.y, theRect.size.width, theRect.size.height);
-    
-    CGContextEndTransparencyLayer (myContext);// 6
-}
-#endif
 
 void
 ann_point(int64_t x, int64_t y, RGBColor color, char *label)
@@ -239,6 +226,10 @@ ann_region(NSView *view, uint64_t x, uint64_t y, uint64_t width, uint64_t height
    
     nullDraw = [NULLDraw alloc];
 
+#ifdef DATA_PRE_RENDER
+    dataLayers = (CGLayerRef *)calloc(data.numValues, sizeof(CGLayerRef));  // automatically zeroed
+    dataLayerRendered = (char *)calloc(data.numValues, sizeof(char)); // automatically zeroed
+#endif
     annLayers = CFDictionaryCreateMutable(NULL, (data.numValues >> TILEWIDTH_LOG2BITS)+1, NULL, &kCFTypeDictionaryValueCallBacks);
     
     NSSize wcsize;
@@ -356,8 +347,45 @@ ann_region(NSView *view, uint64_t x, uint64_t y, uint64_t width, uint64_t height
 -(void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context
 {
     CGRect bounds = CGContextGetClipBoundingBox(context);
-    CGPoint loc;
+#ifdef DATA_PRE_RENDER
+    uint64_t i = ((uint64_t)bounds.origin.x >> TILEWIDTH_LOG2BITS);
+    
+    CGLayerRef tileLayer = dataLayers[i];
+    if (tileLayer && dataLayerRendered[i]==1) {
+        CGContextDrawLayerAtPoint(context, CGPointMake(bounds.origin.x,0), tileLayer);
+    } else {
+        if (tileLayer==NULL) {
+            tileLayer = CGLayerCreateWithContext(context,tileSize,NULL);
+            dataLayers[i] = tileLayer;
+        }
+        if (dataLayerRendered[i]==0) {
+            CGContextRef tileLayerCtx = CGLayerGetContext (tileLayer);
+            CGContextClearRect(tileLayerCtx, CGRectMake(0,0,tileSize.width,tileSize.height));
+            CGPoint loc;
+            //   CGAffineTransform ctm = CGContextGetCTM(context);
+            //    NSLog(@"Data: drawLayer bounds.x=%f CTM is: %g %g %g %g %g %g", bounds.origin.x, ctm.a, ctm.b, ctm.c, ctm.d, ctm.tx, ctm.ty);
+            
+            // Adjust start and end to redraw overlapping points
+            int x,
+            xstart=(int)bounds.origin.x,
+            xend = bounds.origin.x + bounds.size.width + thePoint.radius;
+            
+            if (xstart!=0) xstart-=thePoint.radius;
+            
+            for (x=xstart; x<xend; x++) {
+                loc.x = x - thePoint.radius;
+                if (x<data.numValues) {
+                    loc.y  = (((unsigned short *)data.mem)[x])-thePoint.radius;
+                    CGContextDrawLayerAtPoint(tileLayerCtx, loc, thePoint.layer);
+                }
+            }
+            dataLayerRendered[i]=1;
+            CGContextDrawLayerAtPoint(context, CGPointMake(bounds.origin.x,0), tileLayer);
+        }
+    }
 
+#else
+    CGPoint loc;
  //   CGAffineTransform ctm = CGContextGetCTM(context);
 //    NSLog(@"Data: drawLayer bounds.x=%f CTM is: %g %g %g %g %g %g", bounds.origin.x, ctm.a, ctm.b, ctm.c, ctm.d, ctm.tx, ctm.ty);
  
@@ -375,7 +403,7 @@ ann_region(NSView *view, uint64_t x, uint64_t y, uint64_t width, uint64_t height
             CGContextDrawLayerAtPoint(context, loc, thePoint.layer);
         }
     }
-
+#endif
   }
 
 
