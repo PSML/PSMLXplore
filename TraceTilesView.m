@@ -85,23 +85,11 @@ extern TraceTilesView *tilesView;
     if ([characters isEqual:@"a"]) {
         // Yes, it is
         handled = YES;
-#if 0
-        FILE *fp = fopen(vfile, "r");
-        char line[256];
-        while (fgets(line, sizeof(line), fp)) {
-            switch (line[0]) {
-                case 'v': {
-                   uint64_t x = atoll(&line[1]);
-                   ann_vline(self, x, 1.0, 0.0, 0, 0.25, NULL, line);
-                }
-                break;
-            }
-#endif
-            ann_vline(self, data.numValues-20, 0,0,1,0.10, NULL, "v foo");
-            [annLayer setNeedsDisplay];
+        ann_vline(self, 200, 0,0,1,0.10, "Middle", "v 200 0 0 1 .10 Middle");
+        [annLayer setNeedsDisplay];
     } else if ([characters isEqual:@"r"]) {
         handled = YES;
-        ann_region(self, 800, 0, 3000, data.maxValue, 0.0, 1.0, 0, 0.25, NULL,NULL);
+        ann_region(self, 800, 0, 3000, data.maxValue, 0.0, 1.0, 0, 0.25, "Rectangle", "r 800 0 3000 max 0 1 0 0.25 Rectangle");
         [annLayer setNeedsDisplay];
     } else if ([characters isEqual:@"m"]) {
         // Yes, it is
@@ -137,7 +125,7 @@ extern TraceTilesView *tilesView;
         [dataLayer setNeedsDisplay];
         [annLayer setNeedsDisplay];
     } else if ([characters isEqual:@"="]) {
-        setPoint(self, 9);
+        setPoint(self, DEFAULT_POINTSIZE);
         [dataLayer setNeedsDisplay];
         [annLayer setNeedsDisplay];
     } else if ([characters isEqual:@"-"]) {

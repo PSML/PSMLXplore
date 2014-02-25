@@ -36,6 +36,39 @@ void mapData(const char *path, uint64 max) {
 
 struct ThePoint thePoint = { nil, 0, 0 };
 
+#define DEFAULT_LABEL_FONTSIZE 24.0f
+
+CTLineRef
+MakeCTLine(NSString *string, NSSize *size)
+{
+        CGFloat fontSize = DEFAULT_LABEL_FONTSIZE;
+        
+        // Create an attributed string with string and font information
+        CTFontRef font = CTFontCreateWithName(CFSTR("Helvetica-Light"), fontSize, nil);
+        NSDictionary* attributes = [NSDictionary dictionaryWithObjectsAndKeys:
+                                    (__bridge id)font, kCTFontAttributeName,
+                                    nil];
+        NSAttributedString* as = [[NSAttributedString alloc] initWithString:string attributes:attributes];
+        CFRelease(font);
+        
+        // Figure out how big an image we need
+        CTLineRef line = CTLineCreateWithAttributedString((CFAttributedStringRef)as);
+        CGFloat ascent, descent, leading;
+        double fWidth = CTLineGetTypographicBounds(line, &ascent, &descent, &leading);
+        
+        // On iOS 4.0 and Mac OS X v10.6 you can pass null for data
+        size->width = ceilf(fWidth);
+        size->height = ceilf(ascent + descent);
+        return line;
+}
+
+void
+DrawCTLineAtPoint(CTLineRef line, NSPoint pt, CGContextRef ctx) {
+        // Draw the text
+        CGContextSetTextPosition(ctx, pt.x, pt.y);
+        CTLineDraw(line, ctx);
+}
+    
 void
 setPoint(NSView *view, unsigned int diameter)
 {
@@ -64,7 +97,6 @@ setPoint(NSView *view, unsigned int diameter)
     CGContextFillRect (ptCtx, ptRect);
     CGContextSetRGBFillColor(ptCtx, 1.0, 0.0, 0.0, 1.0);
     CGContextFillEllipseInRect(ptCtx, ptRect);
-    
     [view unlockFocus];
     NSLog(@"setPoint diameter:%u radius:%u", thePoint.diameter, thePoint.radius);
 }
@@ -123,15 +155,25 @@ ann_region(NSView *view,
     uint64_t endTile = (x + width) >> TILEWIDTH_LOG2BITS;
     CGLayerRef tileLayer;
     CGContextRef layerCtx;
+    CTLineRef labelLine;
+    CGRect labelRect;
+    
+    if (label) {
+        NSSize labelSize;
+        NSString *labelStr = [[NSString alloc] initWithBytes:label length:strlen(label) encoding:NSASCIIStringEncoding];
+        labelLine = MakeCTLine(labelStr, &labelSize);
+        labelRect = CGRectMake(x+(width/2),y+(height/2), labelSize.width, labelSize.height);
+    }
     
     CGRect annRect = CGRectMake(x,y,width,height);
     CGRect tileRect = CGRectMake(0,0,tileSize.width,tileSize.height);
-    CGRect annTileIntersect;
+    CGRect annTileIntersect, labelTileIntersect;
     
     [view lockFocus];
     for (uint64_t i=startTile; i<=endTile; i++) {
         tileRect.origin.x = i << TILEWIDTH_LOG2BITS;
         annTileIntersect = CGRectIntersection(annRect, tileRect);
+        if (label) labelTileIntersect = CGRectIntersection(labelRect, tileRect);
         tileLayer = (CGLayerRef)CFDictionaryGetValue(annLayers, (void *)i);
         if (tileLayer==NULL) {
             CGContextRef context = (CGContextRef)[[NSGraphicsContext currentContext]
@@ -145,8 +187,12 @@ ann_region(NSView *view,
         CGContextSetRGBFillColor(layerCtx, red, green, blue, alpha);
         annTileIntersect.origin.x -= tileRect.origin.x;
         CGContextFillRect(layerCtx,annTileIntersect);
-        
+        if (label) {
+           labelTileIntersect.origin.x -= tileRect.origin.x;
+            DrawCTLineAtPoint(labelLine,labelTileIntersect.origin, layerCtx);
+        }
     }
+    if (label) CFRelease(labelLine);
     [view unlockFocus];
     [theAppDelegate.annCmdArray addObject:[[NSString alloc] initWithBytes:cmd length:strlen(cmd) encoding:NSASCIIStringEncoding]];
     [theAppDelegate.annTable reloadData];
@@ -387,7 +433,7 @@ int64_t theArgc;
                                                object:[scrollView contentView]];
 
     
-    setPoint(tilesView, 9);
+    setPoint(tilesView, DEFAULT_POINTSIZE);
     // Layers start life validated (unlike views).
 	// We request that the layer have its contents drawn so that it can display something.
 	[dataLayer setNeedsDisplay];

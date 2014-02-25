@@ -9,6 +9,7 @@
 #ifndef PSMLXplore_thepoint_h
 #define PSMLXplore_thepoint_h
 
+#define DEFAULT_POINTSIZE 13
 struct ThePoint {
     CGLayerRef layer;
     unsigned int diameter;
