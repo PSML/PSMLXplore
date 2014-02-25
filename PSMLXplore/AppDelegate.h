@@ -9,12 +9,18 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface AppDelegate : NSObject <NSApplicationDelegate>
+@interface AppDelegate : NSObject <NSApplicationDelegate,NSTableViewDataSource,NSStreamDelegate>
 
 @property (weak) IBOutlet NSTextField *inspectorOriginX;
 @property (weak) IBOutlet NSTextField *inspectorOriginY;
 @property (strong) IBOutlet NSWindow *window;
+@property (weak) IBOutlet NSTableView *annTable;
+@property (strong) NSMutableArray * annCmdArray;
+@property (strong) NSInputStream *annStream;
+@property (strong)NSMutableData *annCmdData;
 
 - (void)scrollViewContentBoundsDidChange:(NSNotification *)notification;
-
+- (int)numberOfRowsInTableView:(NSTableView *)tbvj;
+- (id) tableView:(NSTableView *)tbv objectValueForTableColumn:(NSTableColumn *)tc
+             row:(int)row;
 @end

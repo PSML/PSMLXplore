@@ -18,7 +18,7 @@ struct Data {
 
 extern struct Data data;
 
-void mapData(char *path, uint64 max);
+void mapData(const char *path, uint64 max);
 
 #if 0
 static inline

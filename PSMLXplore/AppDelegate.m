@@ -23,7 +23,7 @@
 
 struct Data data = { NULL, 0, 0 };
 
-void mapData(char *path, uint64 max) {
+void mapData(const char *path, uint64 max) {
     int fd = open(path, O_RDONLY);
     fcntl(fd, F_NOCACHE, 1);
     struct stat stats;
@@ -84,11 +84,13 @@ NULLDraw *nullDraw = nil;
 @end
 
 
-
+AppDelegate *theAppDelegate = nil;
 NSScrollView *scrollView = nil;
 TraceTilesView *tilesView = nil;
 TraceTilesLayer *dataLayer = nil;
 TraceTilesLayer *annLayer = nil;
+
+//#define DATA_PRE_RENDER
 
 #ifdef DATA_PRE_RENDER
 CGLayerRef *dataLayers = NULL;
@@ -102,9 +104,8 @@ int drawAnn = 0;
 
 // TILE WIDTH 1024
 #define TILEWIDTH_LOG2BITS 10
-#define TILEWIDTH (1<<10)
+#define TILEWIDTH (1<<TILEWIDTH_LOG2BITS)
 CGSize tileSize;
-
 
 void
 ann_point(int64_t x, int64_t y, RGBColor color, char *label)
@@ -113,28 +114,10 @@ ann_point(int64_t x, int64_t y, RGBColor color, char *label)
 }
 
 void
-ann_vline(NSView *view, int64_t x, int64_t len,
-          CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
-          char *label)
-{
-    
-    
-}
-
-void
-ann_hline(NSView *view,
-          int64_t y, int64_t len,
-          CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
-          char *label)
-{
-//    ann_region(view,
-}
-
-void
 ann_region(NSView *view,
            uint64_t x, uint64_t y, uint64_t width, uint64_t height,
            CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
-           char *label)
+           char *label, char *cmd)
 {
     uint64_t startTile = x >> TILEWIDTH_LOG2BITS;
     uint64_t endTile = (x + width) >> TILEWIDTH_LOG2BITS;
@@ -151,21 +134,43 @@ ann_region(NSView *view,
         annTileIntersect = CGRectIntersection(annRect, tileRect);
         tileLayer = (CGLayerRef)CFDictionaryGetValue(annLayers, (void *)i);
         if (tileLayer==NULL) {
-          CGContextRef context = (CGContextRef)[[NSGraphicsContext currentContext]
+            CGContextRef context = (CGContextRef)[[NSGraphicsContext currentContext]
                                                   graphicsPort];
-          tileLayer = CGLayerCreateWithContext(context,tileSize,NULL);
-          layerCtx = CGLayerGetContext (tileLayer);
-          CGContextClearRect(layerCtx, CGRectMake(0,0,tileSize.width,tileSize.height));
-          CFDictionarySetValue(annLayers, (void *)i, tileLayer);
+            tileLayer = CGLayerCreateWithContext(context,tileSize,NULL);
+            layerCtx = CGLayerGetContext (tileLayer);
+            CGContextClearRect(layerCtx, CGRectMake(0,0,tileSize.width,tileSize.height));
+            CFDictionarySetValue(annLayers, (void *)i, tileLayer);
         }
         layerCtx = CGLayerGetContext (tileLayer);
         CGContextSetRGBFillColor(layerCtx, red, green, blue, alpha);
         annTileIntersect.origin.x -= tileRect.origin.x;
         CGContextFillRect(layerCtx,annTileIntersect);
-
+        
     }
     [view unlockFocus];
+    [theAppDelegate.annCmdArray addObject:[[NSString alloc] initWithBytes:cmd length:strlen(cmd) encoding:NSASCIIStringEncoding]];
+    [theAppDelegate.annTable reloadData];
 }
+
+void
+ann_vline(NSView *view,
+          int64_t x,
+          CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
+          char *label, char *cmd)
+{
+    ann_region(view, x, 0, thePoint.diameter, data.maxValue, red, green, blue, alpha, label, cmd);
+}
+
+void
+ann_hline(NSView *view,
+          int64_t y,
+          CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
+          char *label, char *cmd)
+{
+    ann_region(view, 0, y, data.maxValue, thePoint.diameter, red, green, blue, alpha, label, cmd);
+}
+
+
 
 
 @implementation AnnotationsDelegate
@@ -219,12 +224,65 @@ ann_region(NSView *view,
  //   [annLayer setNeedsDisplay];
 }
 
+const char **theArgv;
+int64_t theArgc;
+
+- (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode
+{
+    
+    switch(eventCode) {
+        case NSStreamEventHasBytesAvailable:
+        {
+            char buf[1024];
+            static int len=0;
+            len += [(NSInputStream *)stream read:(uint8_t *)&buf[len] maxLength:1024-len];
+            for (int i=len-1; i>=0; i--) {
+                if (buf[i]=='\n') {
+                    NSLog(@"got line: %s", buf);
+                    ann_vline(tilesView, atoll(&buf[1]), .5, .5, 0, .7, NULL, buf);
+                    [annLayer setNeedsDisplay];
+                    len=0;
+                }
+            }
+            if(len) {
+                [_annCmdData appendBytes:(const void *)buf length:len];
+                NSLog(@"%@", _annCmdData);
+            } else {
+                NSLog(@"no buffer!");
+            }
+            break;
+        }
+        default:
+        {
+            NSLog(@"OTHER");
+        }
+    }
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
 {
     // Insert code here to initialize your application
    // do global initializations
-    mapData("/tmp/data", 2823);
+    NSString *annPath;
+    char *annStr;
+    NSLog(@"theArgc=%lld theArgv[0]=%s", theArgc, theArgv[0]);
+    theAppDelegate = self;
     
+    for (int i=0; i<theArgc; i++) { NSLog(@"theArg[%d]=%s", i, theArgv[i]); }
+    if (theArgc >= 3 && (theArgv[1][0] != '-' && theArgv[1][1] != 'N' && theArgv[1][2] != 'S')) {
+        mapData(theArgv[1], atoll(theArgv[2]));
+        if (theArgc > 3) annStr = (char *)theArgv[3];
+        else annStr = "/tmp/vline";
+    } else {
+        mapData("/tmp/data", 2823);
+        annStr = "/tmp/vline";
+    }
+    annPath = [[NSString alloc] initWithBytes:annStr length:strlen(annStr) encoding:NSASCIIStringEncoding];
+    _annStream = [[NSInputStream alloc] initWithFileAtPath:annPath];
+    [_annStream setDelegate:self];
+    [_annStream scheduleInRunLoop:[NSRunLoop currentRunLoop]
+                       forMode:NSDefaultRunLoopMode];
+    [_annStream open];
     NSLog(@"Data Mapped %lld", data.filesize);
    
     nullDraw = [NULLDraw alloc];
@@ -233,6 +291,8 @@ ann_region(NSView *view,
     dataLayers = (CGLayerRef *)calloc(data.numValues, sizeof(CGLayerRef));  // automatically zeroed
     dataLayerRendered = (char *)calloc(data.numValues, sizeof(char)); // automatically zeroed
 #endif
+    self.annCmdArray = [[NSMutableArray alloc] init];
+    
     annLayers = CFDictionaryCreateMutable(NULL, (data.numValues >> TILEWIDTH_LOG2BITS)+1, NULL, &kCFTypeDictionaryValueCallBacks);
     
     NSSize wcsize;
@@ -338,7 +398,8 @@ ann_region(NSView *view,
           scrollView.frame.size.width, scrollView.frame.size.height,
           tilesView.frame.size.width, tilesView.frame.size.height,
           dataLayer.frame.size.width, dataLayer.frame.size.height,
-          annLayer.frame.size.width, annLayer.frame.size.height);    
+          annLayer.frame.size.width, annLayer.frame.size.height);
+    [_annTable reloadData];
  }
 
 - (void)dealloc
@@ -346,6 +407,16 @@ ann_region(NSView *view,
     NSLog(@"AppDelegate dalloc");
 }
 
+- (int)numberOfRowsInTableView:(NSTableView *)tbvj {
+    NSLog(@"numberofrows");
+    return (int)[self.annCmdArray count];
+}
+
+- (id) tableView:(NSTableView *)tbv objectValueForTableColumn:(NSTableColumn *)tc
+             row:(int)row {
+    NSLog(@"tableView: %p %d", tc, row);
+    return [self.annCmdArray objectAtIndex:row];
+}
 
 -(void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context
 {

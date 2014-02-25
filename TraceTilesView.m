@@ -56,13 +56,20 @@
 extern void ann_region(NSView *view,
                        uint64_t x, uint64_t y, uint64_t width, uint64_t height,
                        CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
-                       char *label);
+                       char *label,
+                       char *cmd);
+
+extern void ann_vline(NSView *view,
+                      int64_t x,
+                      CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
+                      char *label,
+                      char *cmd);
+
 extern int drawAnn;
 extern TraceTilesLayer *annLayer;
 extern TraceTilesLayer *dataLayer;
 extern NSScrollView *scrollView;
 extern TraceTilesView *tilesView;
-
 
 
 - (void)keyDown:(NSEvent *)theEvent {
@@ -78,11 +85,23 @@ extern TraceTilesView *tilesView;
     if ([characters isEqual:@"a"]) {
         // Yes, it is
         handled = YES;
-        ann_region(self, data.numValues/2, 0, thePoint.diameter, data.maxValue, 1.0, 0.0, 0, 0.25, NULL);
-        [annLayer setNeedsDisplay];
+#if 0
+        FILE *fp = fopen(vfile, "r");
+        char line[256];
+        while (fgets(line, sizeof(line), fp)) {
+            switch (line[0]) {
+                case 'v': {
+                   uint64_t x = atoll(&line[1]);
+                   ann_vline(self, x, 1.0, 0.0, 0, 0.25, NULL, line);
+                }
+                break;
+            }
+#endif
+            ann_vline(self, data.numValues-20, 0,0,1,0.10, NULL, "v foo");
+            [annLayer setNeedsDisplay];
     } else if ([characters isEqual:@"r"]) {
         handled = YES;
-        ann_region(self, 800, 0, 3000, data.maxValue, 0.0, 1.0, 0, 0.25, NULL);
+        ann_region(self, 800, 0, 3000, data.maxValue, 0.0, 1.0, 0, 0.25, NULL,NULL);
         [annLayer setNeedsDisplay];
     } else if ([characters isEqual:@"m"]) {
         // Yes, it is
