@@ -279,7 +279,10 @@ void doCmd(char *buf) {
     {
       uint64_t x, y, w, h;
       float r, g, b, a;
-      char *tok = strtok(&buf[2], " ");
+        char *rcmd = (char *)malloc(strlen(buf));
+        strcpy(rcmd, buf);
+        
+      char *tok = strtok(&rcmd[2], " ");
       x = atoll(tok);
       tok = strtok(NULL, " "); y = atoll(tok);
       tok = strtok(NULL, " "); w = atoll(tok);
@@ -292,6 +295,7 @@ void doCmd(char *buf) {
       tok = strtok(NULL, " "); a = atof(tok);
       tok = strtok(NULL, " ");
       ann_region(tilesView,  x, y, w, h, r, g, b, a, tok, buf);
+        free(rcmd);
       [annLayer setNeedsDisplay];
 //      [tilesView scrollPoint:NSMakePoint(x,y)];
     }
@@ -302,7 +306,9 @@ void doCmd(char *buf) {
           sscanf(&buf[1],"%llu", &x);
           if (x<=data.numValues) {
             NSPoint pt = {x,0};
-            [tilesView scrollPoint:pt];
+            NSLog(@"tileView frame.size.w=%f frame.size.h=%f scale=%f", tilesView.frame.size.width,
+                  tilesView.frame.size.height, scrollView.magnification);
+            [scrollView.contentView scrollToPoint:pt];
           }
       }
     break;
@@ -315,8 +321,8 @@ void doCmd(char *buf) {
     switch(eventCode) {
         case NSStreamEventHasBytesAvailable:
         {
-            char line[1024];
-            uint8_t buf[4096];
+            static char line[1024];
+            static uint8_t buf[4096];
             NSUInteger numIn;
             static int len=0;
             NSLog(@"input");
@@ -358,10 +364,10 @@ void doCmd(char *buf) {
     if (theArgc >= 3 && (theArgv[1][0] != '-' && theArgv[1][1] != 'N' && theArgv[1][2] != 'S')) {
         mapData(theArgv[1], atoll(theArgv[2]));
         if (theArgc > 3) annStr = (char *)theArgv[3];
-        else annStr = "/tmp/vline";
+        else annStr = "/tmp/cmd.pipe";
     } else {
-        mapData("/tmp/data", 2823);
-        annStr = "/tmp/vline";
+        mapData("/tmp/data", 4089);
+        annStr = "/tmp/cmd.pipe";
     }
     annPath = [[NSString alloc] initWithBytes:annStr length:strlen(annStr) encoding:NSASCIIStringEncoding];
     _annStream = [[NSInputStream alloc] initWithFileAtPath:annPath];

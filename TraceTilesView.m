@@ -10,6 +10,9 @@
 #import "TraceTilesLayer.h"
 #include "data.h"
 #include "thepoint.h"
+#include "AppDelegate.h"
+
+extern AppDelegate *theAppDelegate;
 
 @implementation TraceTilesView
 
@@ -45,12 +48,15 @@
 }
 
 - (void)mouseDown:(NSEvent *)theEvent {
+    char cmd[128];
     NSPoint event_location = [theEvent locationInWindow];
     NSPoint point = [self convertPoint:event_location fromView:nil];
-    CGPoint point2 = [self convertPointToBacking:point];
-    NSLog(@"mouseDown: epoint: %f,%f lpoint:%f,%f bpoint:%f,%f", event_location.x, event_location.y,
-            point.x, point.y,
-            point2.x, point2.y);
+    uint64_t x = (uint64_t)point.x;
+    unsigned short y=((unsigned short *)data.mem)[x];
+    [theAppDelegate.inspectorClickXLabel setIntegerValue:(NSInteger)x];
+    [theAppDelegate.inspectorClickYLabel setIntValue:(int)((unsigned short *)data.mem)[x]];
+    snprintf(cmd, 128, "open http://localhost:8000/sft?-s%hu%%20-N",y);
+    system(cmd);
 }
 
 extern void ann_region(NSView *view,
@@ -95,7 +101,7 @@ extern TraceTilesView *tilesView;
         // Yes, it is
         handled = YES;
         NSPoint pt = {data.numValues/2, 0 };
-        [self scrollPoint:pt];
+        [scrollView.contentView scrollToPoint:pt];
           NSLog(@"ms: %f %f", pt.x, pt.y);
     } else if ([characters isEqual:@"f"]) {
         handled = YES;
@@ -114,12 +120,12 @@ extern TraceTilesView *tilesView;
         // Yes, it is
         handled = YES;
         NSPoint pt = {0,0};
-        [self scrollPoint:pt];
+        [scrollView.contentView scrollToPoint:pt];
     } else  if ([characters isEqual:@"e"]) {
         // Yes, it is
         handled = YES;
         NSPoint pt = {data.numValues, 0};
-        [self scrollPoint:pt];
+        [scrollView.contentView scrollToPoint:pt];
     } else if ([characters isEqual:@"+"]) {
         setPoint(self, getPointDiameter()+2);
         [dataLayer setNeedsDisplay];

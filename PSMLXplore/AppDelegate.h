@@ -18,6 +18,8 @@
 @property (strong) NSMutableArray * annCmdArray;
 @property (strong) NSInputStream *annStream;
 @property (strong)NSMutableData *annCmdData;
+@property (weak) IBOutlet NSTextField *inspectorClickXLabel;
+@property (weak) IBOutlet NSTextField *inspectorClickYLabel;
 
 - (void)scrollViewContentBoundsDidChange:(NSNotification *)notification;
 - (int)numberOfRowsInTableView:(NSTableView *)tbvj;
