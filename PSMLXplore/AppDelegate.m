@@ -273,29 +273,69 @@ ann_hline(NSView *view,
 const char **theArgv;
 int64_t theArgc;
 
+void doCmd(char *buf) {
+  switch (buf[0]) {
+  case 'r': 
+    {
+      uint64_t x, y, w, h;
+      float r, g, b, a;
+      char *tok = strtok(&buf[2], " ");
+      x = atoll(tok);
+      tok = strtok(NULL, " "); y = atoll(tok);
+      tok = strtok(NULL, " "); w = atoll(tok);
+      tok = strtok(NULL, " "); 
+      if (strncmp(tok, "max", 3)==0) h = data.maxValue;
+      else h = atoll(tok);
+      tok = strtok(NULL, " "); r = atof(tok);
+      tok = strtok(NULL, " "); g = atof(tok);
+      tok = strtok(NULL, " "); b = atof(tok);
+      tok = strtok(NULL, " "); a = atof(tok);
+      tok = strtok(NULL, " ");
+      ann_region(tilesView,  x, y, w, h, r, g, b, a, tok, buf);
+      [annLayer setNeedsDisplay];
+//      [tilesView scrollPoint:NSMakePoint(x,y)];
+    }
+    break;
+   case 's':
+      {
+          uint64_t x;
+          sscanf(&buf[1],"%llu", &x);
+          if (x<=data.numValues) {
+            NSPoint pt = {x,0};
+            [tilesView scrollPoint:pt];
+          }
+      }
+    break;
+  }
+}
+
 - (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode
 {
     
     switch(eventCode) {
         case NSStreamEventHasBytesAvailable:
         {
-            char buf[1024];
+            char line[1024];
+            uint8_t buf[4096];
+            NSUInteger numIn;
             static int len=0;
-            len += [(NSInputStream *)stream read:(uint8_t *)&buf[len] maxLength:1024-len];
-            for (int i=len-1; i>=0; i--) {
-                if (buf[i]=='\n') {
-                    NSLog(@"got line: %s", buf);
-                    ann_vline(tilesView, atoll(&buf[1]), .5, .5, 0, .7, NULL, buf);
-                    [annLayer setNeedsDisplay];
-                    len=0;
+            NSLog(@"input");
+ //           len += [(NSInputStream *)stream read:(uint8_t *)&buf[len] maxLength:1024-len];
+            while ([(NSInputStream *)stream hasBytesAvailable]) {
+                numIn = [(NSInputStream *)stream read:buf maxLength:4096];
+                NSLog(@"input: got %lu", numIn);
+                for (int i=0; i<numIn; i++) {
+                    line[len]=buf[i];
+                    if (line[len]=='\n') {
+                        line[len]=0;
+                        doCmd(line);
+                        len=0;
+                    } else {
+                        len++;
+                    }
                 }
             }
-            if(len) {
-                [_annCmdData appendBytes:(const void *)buf length:len];
-                NSLog(@"%@", _annCmdData);
-            } else {
-                NSLog(@"no buffer!");
-            }
+                
             break;
         }
         default:
