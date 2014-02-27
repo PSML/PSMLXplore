@@ -10,6 +10,7 @@
 #import "TraceTilesLayer.h"
 #include "data.h"
 #include "thepoint.h"
+#include "highlight.h"
 #include "AppDelegate.h"
 
 extern AppDelegate *theAppDelegate;
@@ -31,10 +32,20 @@ extern AppDelegate *theAppDelegate;
     return YES;
 }
 
+extern CALayer *highlightLayer;
 
 -(void)mouseMoved:(NSEvent *)theEvent {
    NSPoint event_location = [theEvent locationInWindow];
-    NSLog(@"mouseMoved %f,%f",event_location.x, event_location.y);
+   NSPoint point = [self convertPoint:event_location fromView:nil];
+   uint64_t x = (uint64_t)point.x;
+   unsigned short y=((unsigned short *)data.mem)[x];
+
+   highlight(x,y);
+//    NSLog(@"mouseMoved ev: %f,%f data: %llu,%hu w:%f,%f",
+//          event_location.x, event_location.y,
+//          x,y,
+//          theHighlight.rect.origin.x, theHighlight.rect.origin.y);
+          
 }
 
 -(void)mouseDragged:(NSEvent *)theEvent {

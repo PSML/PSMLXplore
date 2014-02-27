@@ -38,6 +38,7 @@
 		AB0A132218B32F05000CA3B6 /* TraceTilesView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = TraceTilesView.m; path = ../TraceTilesView.m; sourceTree = "<group>"; };
 		AB0A132418B3A8A8000CA3B6 /* TraceTilesLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TraceTilesLayer.h; sourceTree = "<group>"; };
 		AB0A132518B3A8A8000CA3B6 /* TraceTilesLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TraceTilesLayer.m; sourceTree = "<group>"; };
+		AB0F4BBE18BF475D006F1E9C /* highlight.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = highlight.h; sourceTree = "<group>"; };
 		AB3EE70518B6931300690327 /* data.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = data.h; sourceTree = "<group>"; };
 		AB3EE70618B6934E00690327 /* thepoint.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = thepoint.h; sourceTree = "<group>"; };
 		ABBCE50618AD341900BEA3AD /* PSMLXplore.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PSMLXplore.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -133,6 +134,7 @@
 				ABBCE51C18AD341900BEA3AD /* AppDelegate.m */,
 				AB3EE70518B6931300690327 /* data.h */,
 				AB3EE70618B6934E00690327 /* thepoint.h */,
+				AB0F4BBE18BF475D006F1E9C /* highlight.h */,
 				AB0A132418B3A8A8000CA3B6 /* TraceTilesLayer.h */,
 				AB0A132518B3A8A8000CA3B6 /* TraceTilesLayer.m */,
 				ABBCE51E18AD341900BEA3AD /* MainMenu.xib */,
