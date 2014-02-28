@@ -58,16 +58,13 @@ extern CALayer *highlightLayer;
     NSLog(@"mouseUp %f,%f",event_location.x, event_location.y);
 }
 
+uint64_t clickx = 0;
 - (void)mouseDown:(NSEvent *)theEvent {
-    char cmd[128];
     NSPoint event_location = [theEvent locationInWindow];
     NSPoint point = [self convertPoint:event_location fromView:nil];
-    uint64_t x = (uint64_t)point.x;
-    unsigned short y=((unsigned short *)data.mem)[x];
-    [theAppDelegate.inspectorClickXLabel setIntegerValue:(NSInteger)x];
-    [theAppDelegate.inspectorClickYLabel setIntValue:(int)((unsigned short *)data.mem)[x]];
-    snprintf(cmd, 128, "open http://localhost:8000/sft?-s%hu%%20-N",y);
-    system(cmd);
+    clickx = (uint64_t)point.x;
+    [theAppDelegate.inspectorClickXLabel setIntegerValue:(NSInteger)clickx];
+    [theAppDelegate.inspectorClickYLabel setIntValue:(int)((unsigned short *)data.mem)[clickx]];
 }
 
 extern void ann_region(NSView *view,
@@ -104,7 +101,13 @@ extern TraceTilesView *tilesView;
         handled = YES;
         ann_vline(self, 200, 0,0,1,0.10, "Middle", "v 200 0 0 1 .10 Middle");
         [annLayer setNeedsDisplay];
-    } else if ([characters isEqual:@"r"]) {
+    } else if ([characters isEqual:@"i"])  {
+        char cmd[128];
+        handled = YES;
+        unsigned short y=((unsigned short *)data.mem)[clickx];
+        snprintf(cmd, 128, "open http://localhost:8000/sft?-s%hu%%20-N",y);
+        system(cmd);
+     } else if ([characters isEqual:@"r"]) {
         handled = YES;
         ann_region(self, 800, 0, 3000, data.maxValue, 0.0, 1.0, 0, 0.25, "Rectangle", "r 800 0 3000 max 0 1 0 0.25 Rectangle");
         [annLayer setNeedsDisplay];

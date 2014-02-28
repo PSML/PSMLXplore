@@ -342,6 +342,7 @@ const char **theArgv;
 int64_t theArgc;
 
 void doCmd(char *buf) {
+    NSLog(@"%s", buf);
   switch (buf[0]) {
   case 'r': 
     {
@@ -374,8 +375,6 @@ void doCmd(char *buf) {
           sscanf(&buf[1],"%llu", &x);
           if (x<=data.numValues) {
             NSPoint pt = {x,0};
-            NSLog(@"tileView frame.size.w=%f frame.size.h=%f scale=%f", tilesView.frame.size.width,
-                  tilesView.frame.size.height, scrollView.magnification);
             [scrollView.contentView scrollToPoint:pt];
           }
       }
@@ -385,7 +384,7 @@ void doCmd(char *buf) {
 
 - (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode
 {
-    
+    NSLog(@"+");
     switch(eventCode) {
         case NSStreamEventHasBytesAvailable:
         {
