@@ -9,7 +9,7 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface AppDelegate : NSObject <NSApplicationDelegate,NSTableViewDataSource>
+@interface AppDelegate : NSObject <NSApplicationDelegate,NSTableViewDataSource,NSTableViewDelegate>
 
 @property (weak) IBOutlet NSTextField *inspectorOriginX;
 @property (weak) IBOutlet NSTextField *inspectorOriginY;
@@ -24,4 +24,6 @@
 - (int)numberOfRowsInTableView:(NSTableView *)tbvj;
 - (id) tableView:(NSTableView *)tbv objectValueForTableColumn:(NSTableColumn *)tc
              row:(int)row;
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification;
+
 @end

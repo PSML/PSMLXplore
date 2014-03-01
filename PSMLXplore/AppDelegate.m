@@ -471,6 +471,7 @@ NSFileHandle *cmdFH = nil;
     dataLayerRendered = (char *)calloc(data.numValues, sizeof(char)); // automatically zeroed
 #endif
     self.annCmdArray = [[NSMutableArray alloc] init];
+    [_annTable setDelegate:self];
     
     annLayers = CFDictionaryCreateMutable(NULL, (data.numValues >> TILEWIDTH_LOG2BITS)+1, NULL, &kCFTypeDictionaryValueCallBacks);
     
@@ -608,6 +609,20 @@ NSFileHandle *cmdFH = nil;
              row:(int)row {
 //    NSLog(@"tableView: %p %d", tc, row);
     return [self.annCmdArray objectAtIndex:row];
+}
+
+
+
+- (void)tableViewSelectionDidChange:(NSNotification *)aNotification
+{
+    NSInteger selectedRow = [_annTable selectedRow];
+    NSString *xstr = [[theAppDelegate.annCmdArray objectAtIndex:selectedRow] substringFromIndex:2];
+    uint64_t x = [xstr longLongValue];
+//    NSLog(@"tableView selected: %ld: %@: %llu",selectedRow, xstr, x);
+    if (x<=data.numValues) {
+        NSPoint pt = {x,0};
+        [scrollView.contentView scrollToPoint:pt];
+    }
 }
 
 -(void)drawLayer:(CALayer *)layer inContext:(CGContextRef)context
