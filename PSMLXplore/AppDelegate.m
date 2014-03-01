@@ -564,7 +564,7 @@ NSFileHandle *cmdFH = nil;
     [self.window setContentView:scrollView];
     [self.window setContentSize:wcsize];
     [self.window acceptsMouseMovedEvents];
-    [self.window setAcceptsMouseMovedEvents:YES];
+  //  [self.window setAcceptsMouseMovedEvents:YES];
     
     NSLog(@"TraceTilesLayer %f", [TraceTilesLayer fadeDuration]);
     NSLog(@"dataLayer tileSize %f %f", dataLayer.tileSize.width, dataLayer.tileSize.height);

@@ -37,10 +37,14 @@ extern CALayer *highlightLayer;
 -(void)mouseMoved:(NSEvent *)theEvent {
    NSPoint event_location = [theEvent locationInWindow];
    NSPoint point = [self convertPoint:event_location fromView:nil];
-   uint64_t x = (uint64_t)point.x;
-   unsigned short y=((unsigned short *)data.mem)[x];
 
-   highlight(x,y);
+   uint64_t x = (uint64_t)point.x;
+
+    if (x<data.maxValue) {
+      unsigned short y=((unsigned short *)data.mem)[x];
+      highlight(x,y);
+    }
+    
 //    NSLog(@"mouseMoved ev: %f,%f data: %llu,%hu w:%f,%f",
 //          event_location.x, event_location.y,
 //          x,y,
@@ -107,6 +111,11 @@ extern TraceTilesView *tilesView;
         unsigned short y=((unsigned short *)data.mem)[clickx];
         snprintf(cmd, 128, "open http://localhost:8000/sft?-s%hu%%20-N",y);
         system(cmd);
+    } else if ([characters isEqual:@"h"])  {
+        handled = YES;
+        BOOL state = [theAppDelegate.window acceptsMouseMovedEvents];
+        if (state==YES) [theAppDelegate.window setAcceptsMouseMovedEvents:NO];
+        else [theAppDelegate.window setAcceptsMouseMovedEvents:YES];
      } else if ([characters isEqual:@"r"]) {
         handled = YES;
         ann_region(self, 800, 0, 3000, data.maxValue, 0.0, 1.0, 0, 0.25, "Rectangle", "r 800 0 3000 max 0 1 0 0.25 Rectangle");
