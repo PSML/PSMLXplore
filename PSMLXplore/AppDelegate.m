@@ -247,7 +247,12 @@ ann_region(NSView *view,
     if (label) CFRelease(labelLine);
     [view unlockFocus];
     [theAppDelegate.annCmdArray addObject:[[NSString alloc] initWithBytes:cmd length:strlen(cmd) encoding:NSASCIIStringEncoding]];
-    [theAppDelegate.annTable reloadData];
+   
+//    NSLog(@"count=%ld", [theAppDelegate.annCmdArray count]);
+
+    [theAppDelegate.annTable beginUpdates];
+    [theAppDelegate.annTable insertRowsAtIndexes:[NSIndexSet indexSetWithIndex:[theAppDelegate.annCmdArray count]-1] withAnimation:NSTableViewAnimationEffectNone];
+    [theAppDelegate.annTable endUpdates];
 }
 
 void
@@ -607,7 +612,7 @@ NSFileHandle *cmdFH = nil;
 
 - (id) tableView:(NSTableView *)tbv objectValueForTableColumn:(NSTableColumn *)tc
              row:(int)row {
-//    NSLog(@"tableView: %p %d", tc, row);
+ //   NSLog(@"tableView: %p %d", tc, row);
     return [self.annCmdArray objectAtIndex:row];
 }
 
