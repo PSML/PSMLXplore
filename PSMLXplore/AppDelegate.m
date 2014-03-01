@@ -342,7 +342,7 @@ const char **theArgv;
 int64_t theArgc;
 
 void doCmd(char *buf) {
-    NSLog(@"%s", buf);
+//    NSLog(@"%s", buf);
   switch (buf[0]) {
   case 'r': 
     {
@@ -382,40 +382,46 @@ void doCmd(char *buf) {
   }
 }
 
-- (void)stream:(NSStream *)stream handleEvent:(NSStreamEvent)eventCode
+NSFileHandle *cmdFH = nil;
+
+- (void) getData: (NSNotification *)aNotification
 {
-    NSLog(@"+");
-    switch(eventCode) {
-        case NSStreamEventHasBytesAvailable:
-        {
-            static char line[1024];
-            static uint8_t buf[4096];
-            NSUInteger numIn;
-            static int len=0;
-            NSLog(@"input");
- //           len += [(NSInputStream *)stream read:(uint8_t *)&buf[len] maxLength:1024-len];
-            while ([(NSInputStream *)stream hasBytesAvailable]) {
-                numIn = [(NSInputStream *)stream read:buf maxLength:4096];
-                NSLog(@"input: got %lu", numIn);
-                for (int i=0; i<numIn; i++) {
-                    line[len]=buf[i];
-                    if (line[len]=='\n') {
-                        line[len]=0;
-                        doCmd(line);
-                        len=0;
-                    } else {
-                        len++;
-                    }
-                }
-            }
-                
-            break;
+ //   NSLog(@"notification received");
+    NSFileHandle* fh = [aNotification object];
+    static char line[1024];
+    static char buf[4096];
+    NSUInteger numIn;
+    static int len=0;
+//    NSLog(@"input");
+    //           len += [(NSInputStream *)stream read:(uint8_t *)&buf[len] maxLength:1024-len];
+   NSData *data = [fh availableData];
+   if (data) {
+      numIn = data.length;
+      if (numIn > 0) {
+ //        NSLog(@"input: got %lu", numIn);
+          // this seems dumb that we need to do this copy
+          // maybe we should switch over and just work with the
+          // unix read and our own buf memory
+          if (numIn>4096) numIn = 4096;
+         [data getBytes:buf length:numIn];
+         for (int i=0; i<numIn; i++) {
+           line[len]=buf[i];
+           if (line[len]=='\n') {
+              line[len]=0;
+              doCmd(line);
+              len=0;
+           } else {
+              len++;
+           }
         }
-        default:
-        {
-            NSLog(@"OTHER");
-        }
-    }
+      } else {
+         NSLog(@"ERROR: ZERO BYTES READ: FD CLOSED?");
+          
+      }
+   } else {
+      NSLog(@"ERROR: data=NULL");
+   }
+   [fh waitForDataInBackgroundAndNotify];
 }
 
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification
@@ -437,11 +443,25 @@ void doCmd(char *buf) {
         annStr = "/tmp/cmd.pipe";
     }
     annPath = [[NSString alloc] initWithBytes:annStr length:strlen(annStr) encoding:NSASCIIStringEncoding];
+ 
+#if 0
     _annStream = [[NSInputStream alloc] initWithFileAtPath:annPath];
     [_annStream setDelegate:self];
     [_annStream scheduleInRunLoop:[NSRunLoop currentRunLoop]
                        forMode:NSDefaultRunLoopMode];
-    [_annStream open];
+#endif
+    
+    int fd = open(annStr, O_RDONLY|O_NONBLOCK);
+    cmdFH = [[NSFileHandle alloc] initWithFileDescriptor:fd];
+    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+        [notificationCenter addObserver:self
+                            selector:@selector(getData:)
+                            name:NSFileHandleDataAvailableNotification
+                            object:cmdFH];
+        [cmdFH waitForDataInBackgroundAndNotify];
+
+    
+//    [_annStream open];
     NSLog(@"Data Mapped %lld", data.filesize);
    
     nullDraw = [NULLDraw alloc];
@@ -580,13 +600,13 @@ void doCmd(char *buf) {
 }
 
 - (int)numberOfRowsInTableView:(NSTableView *)tbvj {
-    NSLog(@"numberofrows");
+//    NSLog(@"numberofrows");
     return (int)[self.annCmdArray count];
 }
 
 - (id) tableView:(NSTableView *)tbv objectValueForTableColumn:(NSTableColumn *)tc
              row:(int)row {
-    NSLog(@"tableView: %p %d", tc, row);
+//    NSLog(@"tableView: %p %d", tc, row);
     return [self.annCmdArray objectAtIndex:row];
 }
 

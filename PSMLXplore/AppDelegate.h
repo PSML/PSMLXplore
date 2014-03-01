@@ -9,14 +9,13 @@
 #import <Cocoa/Cocoa.h>
 
 
-@interface AppDelegate : NSObject <NSApplicationDelegate,NSTableViewDataSource,NSStreamDelegate>
+@interface AppDelegate : NSObject <NSApplicationDelegate,NSTableViewDataSource>
 
 @property (weak) IBOutlet NSTextField *inspectorOriginX;
 @property (weak) IBOutlet NSTextField *inspectorOriginY;
 @property (strong) IBOutlet NSWindow *window;
 @property (weak) IBOutlet NSTableView *annTable;
 @property (strong) NSMutableArray * annCmdArray;
-@property (strong) NSInputStream *annStream;
 @property (strong)NSMutableData *annCmdData;
 @property (weak) IBOutlet NSTextField *inspectorClickXLabel;
 @property (weak) IBOutlet NSTextField *inspectorClickYLabel;
