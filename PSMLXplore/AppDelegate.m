@@ -266,14 +266,12 @@ ann_vline(NSView *view,
 
 void
 ann_hline(NSView *view,
-          int64_t y,
+          int64_t x, int64_t y, int64_t width,
           CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
           char *label, char *cmd)
 {
-    ann_region(view, 0, y, data.maxValue, thePoint.diameter, red, green, blue, alpha, label, cmd);
+    ann_region(view, x, y, width, thePoint.diameter, red, green, blue, alpha, label, cmd);
 }
-
-
 
 
 @implementation AnnotationsDelegate
@@ -384,6 +382,29 @@ void doCmd(char *buf) {
           }
       }
     break;
+   case 'h':
+      {
+          uint64_t x, y, w;
+          float r, g, b, a;
+          char *rcmd = (char *)malloc(strlen(buf));
+          strcpy(rcmd, buf);
+          
+          char *tok = strtok(&rcmd[2], " ");
+          x = atoll(tok);
+          tok = strtok(NULL, " "); y = atoll(tok);
+          tok = strtok(NULL, " ");
+          if (strncmp(tok, "max", 3)==0) w = data.filesize/2 - x;
+          else w = atoll(tok);
+          tok = strtok(NULL, " "); r = atof(tok);
+          tok = strtok(NULL, " "); g = atof(tok);
+          tok = strtok(NULL, " "); b = atof(tok);
+          tok = strtok(NULL, " "); a = atof(tok);
+          tok = strtok(NULL, " ");
+          ann_hline(tilesView, x, y, w, r, g, b, a, tok, buf);
+          free(rcmd);
+          [annLayer setNeedsDisplay];
+      }
+    break;
   }
 }
 
@@ -438,14 +459,22 @@ NSFileHandle *cmdFH = nil;
     NSLog(@"theArgc=%lld theArgv[0]=%s", theArgc, theArgv[0]);
     theAppDelegate = self;
     
-    for (int i=0; i<theArgc; i++) { NSLog(@"theArg[%d]=%s", i, theArgv[i]); }
+    for (int i=1; i<theArgc; i++) { NSLog(@"theArg[%d]=%s", i, theArgv[i]); }
     if (theArgc >= 3 && (theArgv[1][0] != '-' && theArgv[1][1] != 'N' && theArgv[1][2] != 'S')) {
         mapData(theArgv[1], atoll(theArgv[2]));
-        if (theArgc > 3) annStr = (char *)theArgv[3];
-        else annStr = "/tmp/cmd.pipe";
+        NSLog(@"mapData: %s %s", theArgv[1], theArgv[2]);
+        if (theArgc > 3) {
+            annStr = (char *)theArgv[3];
+            NSLog(@"annStr pipe: %s", theArgv[3]);
+        } else {
+            annStr = "/tmp/cmd.pipe";
+            NSLog(@"annStr pipe: /tmp/cmd.pipe");
+        }
     } else {
         mapData("/tmp/data", 4089);
         annStr = "/tmp/cmd.pipe";
+        NSLog(@"mapData: /tmp/data 4089");
+        NSLog(@"annStr pipe: /tmp/cmd.pipe");
     }
     annPath = [[NSString alloc] initWithBytes:annStr length:strlen(annStr) encoding:NSASCIIStringEncoding];
  

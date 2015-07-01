@@ -74,14 +74,17 @@ uint64_t clickx = 0;
 extern void ann_region(NSView *view,
                        uint64_t x, uint64_t y, uint64_t width, uint64_t height,
                        CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
-                       char *label,
-                       char *cmd);
+                       char *label, char *cmd);
 
 extern void ann_vline(NSView *view,
                       int64_t x,
                       CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
-                      char *label,
-                      char *cmd);
+                      char *label, char *cmd);
+
+extern void ann_hline(NSView *view,
+                      int64_t x, int64_t y, int64_t width,
+                      CGFloat red, CGFloat green, CGFloat blue, CGFloat alpha,
+                      char *label, char *cmd);
 
 extern int drawAnn;
 extern TraceTilesLayer *annLayer;
